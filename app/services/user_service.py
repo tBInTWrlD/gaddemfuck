@@ -24,6 +24,7 @@ class UserService:
         user = User(
             email=schema.email,
             hashed_password=hash_password(schema.password),
+            country=schema.country,  # Сохраняем страну пользователя
             is_active=True,
             role=UserRole.USER.value,
         )
