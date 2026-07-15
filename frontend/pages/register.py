@@ -1,7 +1,7 @@
 import requests
 import streamlit as st
 
-from frontend.api.client import get_error_message, register
+from api.client import get_error_message, register
 
 st.header("Регистрация аккаунта")
 

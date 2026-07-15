@@ -1,8 +1,8 @@
 import requests
 import streamlit as st
 
-from frontend.api.client import get_error_message, get_profile, login
-from frontend.auth.state import clear_auth, is_authenticated, save_auth
+from api.client import get_error_message, get_profile, login
+from auth.state import clear_auth, is_authenticated, save_auth
 
 st.header("Вход в аккаунт")
 

@@ -1,16 +1,15 @@
 import requests
 import streamlit as st
 
-from frontend.api.client import (
+from api.client import (
     delete_request,
     delete_good,
     get_error_message,
 )
-from frontend.auth.state import is_admin, is_authenticated, is_buyer
+from auth.state import is_admin, is_authenticated, is_buyer
 
 
 def render_admin_good_actions(good_id: int, key_prefix: str) -> None:
-    """Действия админа над товаром в общем каталоге"""
     if not is_admin():
         return
 
@@ -42,35 +41,24 @@ def render_admin_good_actions(good_id: int, key_prefix: str) -> None:
 
 
 def render_request_card(request_item: dict) -> None:
-    """Карточка ЗАПРОСА (то, что ищет покупатель) — главная фишка Авито-наоборот"""
     request_id = request_item["id"]
     good_id = request_item["good_id"]
 
     with st.container(border=True):
         st.caption(f"Запрос №{request_id} • От пользователя ID: {request_item['user_id']}")
-
-        # Отображаем детали того, что ищет покупатель
         st.markdown(f"### Ищет товар ID: {good_id}")
+
         if request_item.get("description"):
             st.write(f"**Примечания:** {request_item['description']}")
 
         st.metric(label="Желаемая цена покупателя", value=f"{request_item['target_price']} ₽")
 
-        # Кнопка для просмотра предложений баеров или деталей запроса
         if st.button("Посмотреть предложения", key=f"req_details_{request_id}", use_container_width=True):
             st.session_state["selected_request_id"] = request_id
             st.switch_page("pages/request_details.py")
 
-        # Если вошел баер, он может сразу перейти к отправке оффера
-        if is_authenticated() and is_buyer():
-            if st.button("⚡ Сделать предложение", key=f"req_offer_{request_id}", type="primary",
-                         use_container_width=True):
-                st.session_state["selected_request_id"] = request_id
-                st.switch_page("pages/send_offer.py")
-
 
 def render_good_card(good_item: dict) -> None:
-    """Карточка конкретного ТОВАРА из каталога (из которого покупатель создает запрос)"""
     good_id = good_item["id"]
 
     with st.container(border=True):
@@ -83,7 +71,6 @@ def render_good_card(good_item: dict) -> None:
         if good_item.get("brand"):
             st.caption(f"Бренд: {good_item['brand']} | Категория: {good_item.get('category', 'Разное')}")
 
-        # Главная кнопка — покупатель хочет оставить заявку именно на этот товар
         if st.button("Хочу этот товар (Создать запрос)", key=f"good_want_{good_id}", type="primary",
                      use_container_width=True):
             if not is_authenticated():

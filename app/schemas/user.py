@@ -1,11 +1,11 @@
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from app.models.user import UserRole  # Твой enum с ролями (создадим на этапе моделей)
-
+from app.models.user import UserRole
 
 class UserCreate(BaseModel):
     email: str = Field(min_length=3, max_length=255)
     password: str = Field(min_length=6, max_length=128)
-    country: str = Field(min_length=2, max_length=100, default="Russia", description="Страна нахождения")
+    # Ставим default="Russia", чтобы бэкенд не падал, если фронтенд забыл прислать страну
+    country: str = Field(default="Russia", min_length=2, max_length=100)
 
     @field_validator("email")
     @classmethod
@@ -14,7 +14,6 @@ class UserCreate(BaseModel):
         if "@" not in email:
             raise ValueError("Email must contain @")
         return email
-
 
 class UserLogin(BaseModel):
     email: str = Field(min_length=3, max_length=255)
@@ -28,7 +27,6 @@ class UserLogin(BaseModel):
             raise ValueError("Email must contain @")
         return email
 
-
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -37,6 +35,3 @@ class UserResponse(BaseModel):
     country: str
     is_active: bool
     role: UserRole
-
-
-UserRead = UserResponse

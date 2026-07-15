@@ -6,7 +6,7 @@ from api.client import (
     get_request,
     get_offers_by_request,
     create_offer,
-    create_order
+    change_offer_status
 )
 from auth.state import is_authenticated, is_buyer, current_profile
 
@@ -14,10 +14,9 @@ request_id = st.session_state.get("selected_request_id")
 
 if request_id is None:
     st.info("Сначала выберите запрос для просмотра.")
-    st.page_link("pages/catalog.py", label="Перейти к списку товаров")
+    st.page_link("pages/catalog.py", label="Перейти в каталог")
     st.stop()
 
-# 1. Загружаем данные о самом запросе
 try:
     req_response = get_request(request_id)
     offers_response = get_offers_by_request(request_id)
@@ -40,56 +39,54 @@ st.metric(label="Желаемая цена покупателя", value=f"{reque
 
 st.divider()
 
-# --- БЛОК ДЛЯ БАЕРА: ОТПРАВКА ПРЕДЛОЖЕНИЯ ---
+# --- ДЛЯ БАЕРА: ОТПРАВКА ОФФЕРА ---
 if is_authenticated() and is_buyer():
     st.subheader("⚡ Оставить свое предложение (Для баеров)")
 
     with st.form("send_offer_form"):
         price = st.number_input("Ваша цена доставки и выкупа (₽)", min_value=1, step=500)
         delivery_days = st.number_input("Срок доставки (в днях)", min_value=1, step=1)
-        comment = st.text_area("Комментарий к предложению (например, условия возврата или нюансы)")
-        offer_submitted = st.form_submit_button("Отправить предложение покупателю")
+        comment = st.text_area("Комментарий")
+        offer_submitted = st.form_submit_button("Отправить предложение")
 
     if offer_submitted:
         payload = {"price": int(price), "delivery_days": int(delivery_days), "comment": comment.strip() or None}
         try:
             off_res = create_offer(request_id, payload)
         except requests.RequestException:
-            st.error("Ошибка сети при отправке предложения.")
+            st.error("Ошибка сети.")
             st.stop()
 
-        if off_res.status_code in (200, 201):
-            st.success("Ваше предложение успешно отправлено!")
+        if off_res.ok:
+            st.success("Предложение отправлено!")
             st.rerun()
         else:
             st.error(get_error_message(off_res))
 
-# --- СПИСОК ВСЕХ ПРЕДЛОЖЕНИЙ ОТ БАЕРОВ ---
+# --- СПИСОК ПРЕДЛОЖЕНИЙ ---
 st.subheader("💬 Предложения от баеров")
 if not offers:
-    st.info("На этот запрос пока нет откликов от баеров.")
+    st.info("На этот запрос пока нет откликов.")
 else:
     for offer in offers:
         with st.container(border=True):
             profile = current_profile()
-            is_owner = profile and profile.get("id") == request_data["user_id"]
+            is_owner = bool(profile and profile.get("id") == request_data["user_id"])
 
             st.markdown(f"**Баер ID {offer['buyer_id']}** предлагает:")
             st.markdown(f"**Цена:** {offer['price']} ₽ | **Срок:** {offer['delivery_days']} дн.")
-            if offer.get("comment"):
-                st.caption(f"Комментарий: {offer['comment']}")
+            st.markdown(f"**Статус:** `{offer['status']}`")
 
-            # Если текущий пользователь — автор запроса, он может принять предложение и создать сделку
-            if is_owner:
-                if st.button("🤝 Принять предложение и заказать", key=f"accept_offer_{offer['id']}", type="primary"):
+            if is_owner and offer['status'] == 'pending':
+                if st.button("🤝 Принять предложение", key=f"accept_{offer['id']}", type="primary"):
                     try:
-                        order_res = create_order(offer["id"])
+                        order_res = change_offer_status(offer["id"], "accepted")
                     except requests.RequestException:
-                        st.error("Ошибка при создании заказа.")
+                        st.error("Ошибка сети.")
                         st.stop()
 
-                    if order_res.status_code in (200, 201):
-                        st.success("Заказ успешно создан! Переходим к вашим покупкам.")
+                    if order_res.ok:
+                        st.success("Заказ оформлен!")
                         st.switch_page("pages/purchases.py")
                     else:
                         st.error(get_error_message(order_res))

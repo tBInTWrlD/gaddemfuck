@@ -1,8 +1,8 @@
 import requests
 import streamlit as st
 
-from frontend.api.client import create_request, get_error_message, get_good
-from frontend.auth.state import require_login
+from api.client import create_request, get_error_message, get_good
+from auth.state import require_login
 
 # Страница только для авторизованных
 require_login()

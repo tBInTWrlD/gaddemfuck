@@ -1,8 +1,8 @@
 import requests
 import streamlit as st
 
-from frontend.api.client import get_error_message, get_profile
-from frontend.auth.state import clear_auth, require_login, save_auth, is_buyer
+from api.client import get_error_message, get_profile
+from auth.state import clear_auth, require_login, save_auth, is_buyer
 
 require_login()
 st.header("Личный кабинет")

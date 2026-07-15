@@ -1,9 +1,9 @@
 import requests
 import streamlit as st
 
-from frontend.api.client import get_error_message, get_goods
-from frontend.auth.state import is_admin
-from frontend.components.item_card import render_good_card  # Импортируем карточку товара
+from api.client import get_error_message, get_goods
+from auth.state import is_admin
+from components.item_card import render_good_card  # Импортируем карточку товара
 
 st.header("Каталог доступных товаров")
 

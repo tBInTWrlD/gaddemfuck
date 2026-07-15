@@ -1,17 +1,16 @@
 import requests
 from streamlit import session_state
 
-BACKEND_URL = "http://127.0.0.1:8000"
+BACKEND_URL = "http://0.0.0.0:8000"
 
-# --- ЭНДПОИНТЫ ---
-LOGIN_ENDPOINT = f"{BACKEND_URL}/auth/login"
-REGISTER_ENDPOINT = f"{BACKEND_URL}/auth/register"
+# --- ЭНДПОИНТЫ (Убраны все финальные слэши для точного совпадения с FastAPI) ---
+LOGIN_ENDPOINT = f"{BACKEND_URL}/auth/login/"
+REGISTER_ENDPOINT = f"{BACKEND_URL}/auth/register/"
 PROFILE_ENDPOINT = f"{BACKEND_URL}/users/me"
 
-GOODS_ENDPOINT = f"{BACKEND_URL}/goods/"
-REQUESTS_ENDPOINT = f"{BACKEND_URL}/requests/"
-OFFERS_ENDPOINT = f"{BACKEND_URL}/offers/"
-ORDERS_ENDPOINT = f"{BACKEND_URL}/orders/"
+GOODS_ENDPOINT = f"{BACKEND_URL}/goods"
+REQUESTS_ENDPOINT = f"{BACKEND_URL}/requests"
+OFFERS_ENDPOINT = f"{BACKEND_URL}/offers"
 
 
 # --- АВТОРИЗАЦИЯ И ПРОФИЛЬ ---
@@ -39,32 +38,42 @@ def get_profile() -> requests.Response:
 
 # --- ГЛОБАЛЬНЫЙ КАТАЛОГ ТОВАРОВ (GOODS) ---
 def get_goods() -> requests.Response:
-    """Получить весь каталог товаров (доступно всем)"""
+    """Получить весь каталог товаров"""
     return requests.get(GOODS_ENDPOINT)
 
 
 def get_good(good_id: int) -> requests.Response:
-    return requests.get(f"{GOODS_ENDPOINT}{good_id}")
+    return requests.get(f"{GOODS_ENDPOINT}/{good_id}")
 
 
 def search_goods(query: str) -> requests.Response:
     """Поиск товаров по названию в каталоге"""
-    return requests.get(f"{GOODS_ENDPOINT}search", params={"query": query})
+    return requests.get(f"{GOODS_ENDPOINT}/search", params={"query": query})
 
 
 def create_good(payload: dict) -> requests.Response:
-    """Добавить товар в каталог (обычно для роли ADMIN)"""
+    """Добавить товар в каталог (для роли ADMIN)"""
     return request_with_authorization_header("POST", GOODS_ENDPOINT, payload=payload)
+
+
+def update_good(good_id: int, payload: dict) -> requests.Response:
+    """Обновить данные товара в каталоге (для роли ADMIN)"""
+    return request_with_authorization_header("PATCH", f"{GOODS_ENDPOINT}/{good_id}", payload=payload)
+
+
+def delete_good(good_id: int) -> requests.Response:
+    """Удалить товар из каталога (для роли ADMIN)"""
+    return request_with_authorization_header("DELETE", f"{GOODS_ENDPOINT}/{good_id}")
 
 
 # --- ЗАПРОСЫ ПОКУПАТЕЛЕЙ (REQUESTS) ---
 def get_requests() -> requests.Response:
-    """Получить список всех открытых запросов, которые видят баеры"""
+    """Получить список всех открытых запросов пользователей"""
     return requests.get(REQUESTS_ENDPOINT)
 
 
 def get_request(request_id: int) -> requests.Response:
-    return requests.get(f"{REQUESTS_ENDPOINT}{request_id}")
+    return requests.get(f"{REQUESTS_ENDPOINT}/{request_id}")
 
 
 def create_request(payload: dict) -> requests.Response:
@@ -73,11 +82,11 @@ def create_request(payload: dict) -> requests.Response:
 
 
 def update_request(request_id: int, payload: dict) -> requests.Response:
-    return request_with_authorization_header("PATCH", f"{REQUESTS_ENDPOINT}{request_id}", payload=payload)
+    return request_with_authorization_header("PATCH", f"{REQUESTS_ENDPOINT}/{request_id}", payload=payload)
 
 
 def delete_request(request_id: int) -> requests.Response:
-    return request_with_authorization_header("DELETE", f"{REQUESTS_ENDPOINT}{request_id}")
+    return request_with_authorization_header("DELETE", f"{REQUESTS_ENDPOINT}/{request_id}")
 
 
 # --- ПРЕДЛОЖЕНИЯ БАЕРОВ (OFFERS) ---
@@ -94,58 +103,36 @@ def get_offers_by_request(request_id: int) -> requests.Response:
 
 
 def get_offer(offer_id: int) -> requests.Response:
-    return requests.get(f"{OFFERS_ENDPOINT}{offer_id}")
+    return requests.get(f"{OFFERS_ENDPOINT}/{offer_id}")
 
 
 def update_offer(offer_id: int, payload: dict) -> requests.Response:
-    return request_with_authorization_header("PATCH", f"{OFFERS_ENDPOINT}{offer_id}", payload=payload)
+    return request_with_authorization_header("PATCH", f"{OFFERS_ENDPOINT}/{offer_id}", payload=payload)
 
 
 def delete_offer(offer_id: int) -> requests.Response:
-    return request_with_authorization_header("DELETE", f"{OFFERS_ENDPOINT}{offer_id}")
+    return request_with_authorization_header("DELETE", f"{OFFERS_ENDPOINT}/{offer_id}")
 
 
-# --- ЗАКАЗЫ / СДЕЛКИ (ORDERS) ---
-def create_order(offer_id: int) -> requests.Response:
-    """Покупатель принимает предложение баера и создает заказ (бронирует сделку)"""
-    payload = {"offer_id": offer_id}
-    return request_with_authorization_header("POST", ORDERS_ENDPOINT, payload=payload)
-
-
-def get_my_purchases() -> requests.Response:
-    """Список покупок текущего авторизованного пользователя"""
-    return request_with_authorization_header("GET", f"{ORDERS_ENDPOINT}purchases")
-
-
-def get_my_deliveries() -> requests.Response:
-    """Список доставок баера (какие товары он должен привезти)"""
-    return request_with_authorization_header("GET", f"{ORDERS_ENDPOINT}deliveries")
-
-
-def get_order(order_id: int) -> requests.Response:
-    return request_with_authorization_header("GET", f"{ORDERS_ENDPOINT}{order_id}")
-
-
-def update_order_status(order_id: int, status_str: str) -> requests.Response:
-    """Смена статуса заказа (paid, shipped, delivered, canceled)"""
+# --- УПРАВЛЕНИЕ СДЕЛКАМИ ЧЕРЕЗ СТАТУСЫ ПРЕДЛОЖЕНИЙ ---
+def change_offer_status(offer_id: int, status_str: str) -> requests.Response:
+    """Изменение статуса предложения (accepted, shipped, delivered, canceled)"""
     payload = {"status": status_str}
-    return request_with_authorization_header("PATCH", f"{ORDERS_ENDPOINT}{order_id}/status", payload=payload)
-
-
-def update_good(good_id: int, payload: dict) -> requests.Response:
-    """Обновить данные товара в каталоге (для роли ADMIN)"""
-    endpoint = f"{GOODS_ENDPOINT}{good_id}"
     return request_with_authorization_header(
         "PATCH",
-        endpoint,
-        payload=payload,
+        f"{OFFERS_ENDPOINT}/{offer_id}/status",
+        payload=payload
     )
 
 
-def delete_good(good_id: int) -> requests.Response:
-    """Удалить товар из каталога (для роли ADMIN)"""
-    endpoint = f"{GOODS_ENDPOINT}{good_id}"
-    return request_with_authorization_header("DELETE", endpoint)
+def get_my_purchases() -> requests.Response:
+    """Для покупателя: получить предложения, которые он принял (его активные заказы)"""
+    return request_with_authorization_header("GET", f"{OFFERS_ENDPOINT}/my-purchases")
+
+
+def get_my_deliveries() -> requests.Response:
+    """Для баера: получить его предложения, которые были приняты в работу"""
+    return request_with_authorization_header("GET", f"{OFFERS_ENDPOINT}/my-deliveries")
 
 
 # --- СИСТЕМНОЕ ЯДРО КЛИЕНТА ---
@@ -183,4 +170,3 @@ def get_error_message(response: requests.Response) -> str:
         return str(detail or f"Ошибка backend: HTTP {response.status_code}")
     except ValueError:
         return f"Ошибка backend: HTTP {response.status_code}"
-

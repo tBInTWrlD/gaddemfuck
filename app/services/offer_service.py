@@ -1,18 +1,17 @@
-from sqlalchemy import String, Text, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.database import Base
+def update_offer_status(self, offer_id: int, new_status: str, current_user_id: int) -> Offer:
+    offer = self.get_offer(offer_id)
 
+    # Логика: Принять предложение (accepted) может только создатель ЗАПРОСА
+    if new_status == "accepted" and offer.request.user_id != current_user_id:
+        raise HTTPException(status_code=403, detail="Только автор запроса может принять оффер")
 
-class Request(Base):
-    __tablename__ = "requests"
+    # Логика: Изменить на "отправлено" (shipped) может только баер
+    if new_status == "shipped" and offer.buyer_id != current_user_id:
+        raise HTTPException(status_code=403, detail="Только баер может отметить отправку")
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    # Логика: Изменить на "доставлено" (delivered) может только покупатель
+    if new_status == "delivered" and offer.request.user_id != current_user_id:
+        raise HTTPException(status_code=403, detail="Только покупатель подтверждает получение")
 
-    title: Mapped[str] = mapped_column(String(200), nullable=False)
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    target_price: Mapped[int] = mapped_column(nullable=False)
-
-    # Отношения (Relationships)
-    creator: Mapped["User"] = relationship(back_populates="requests")
-
+    offer.status = new_status
+    return self.repository.update(offer)

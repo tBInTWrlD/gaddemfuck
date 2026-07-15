@@ -1,8 +1,8 @@
 import requests
 import streamlit as st
 
-from frontend.api.client import create_good, get_error_message
-from frontend.auth.state import require_admin
+from api.client import create_good, get_error_message
+from auth.state import require_admin
 
 # Ограничиваем доступ — только админ может наполнять каталог
 require_admin()

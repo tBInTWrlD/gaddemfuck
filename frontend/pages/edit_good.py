@@ -1,8 +1,8 @@
 import requests
 import streamlit as st
 
-from frontend.api.client import get_error_message, get_good, update_good, delete_good
-from frontend.auth.state import require_admin
+from api.client import get_error_message, get_good, update_good, delete_good
+from auth.state import require_admin
 
 # Закрываем доступ для всех, кроме админа
 require_admin()
