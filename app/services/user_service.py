@@ -2,7 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.auth import hash_password
-from app.models.user import User, UserRole
+from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from app.schemas.user import UserCreate
 
@@ -24,9 +24,9 @@ class UserService:
         user = User(
             email=schema.email,
             hashed_password=hash_password(schema.password),
-            country=schema.country,  # Сохраняем страну пользователя
+            country=schema.country,
             is_active=True,
-            role=UserRole.USER.value,
+            role=schema.role.value,  # Сохраняем текстовое значение роли в базу данных
         )
 
         return self.repository.create(user)

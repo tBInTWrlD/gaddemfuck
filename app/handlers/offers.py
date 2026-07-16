@@ -1,77 +1,80 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.auth import get_current_user
+from app.auth import get_current_user, require_role
 from app.database import get_db
-from app.models.user import User
-from app.schemas.request import RequestCreate, RequestResponse, RequestUpdate
-from app.services.request_service import RequestService
+from app.models.user import User, UserRole
+from app.schemas.offer import OfferCreate, OfferResponse, OfferUpdate, OfferUpdateStatus
+from app.services.offer_service import OfferService
 
 router = APIRouter(
-    prefix="/requests",
-    tags=["requests"],
+    tags=["offers"],
 )
 
 
-def get_request_service(
-    db: Session = Depends(get_db),
-) -> RequestService:
-    return RequestService(db)
+def get_offer_service(db: Session = Depends(get_db)) -> OfferService:
+    return OfferService(db)
 
 
 @router.post(
-    "/",
-    response_model=RequestResponse,
+    "/requests/{request_id}/offers",
+    response_model=OfferResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def create_request(
-    schema: RequestCreate,
-    current_user: User = Depends(get_current_user),
-    service: RequestService = Depends(get_request_service),
-):
-    # Передаем current_user.id в сервис, чтобы зафиксировать автора запроса
-    return service.create_request(schema, user_id=current_user.id)
-
-
-@router.get(
-    "/",
-    response_model=list[RequestResponse],
-)
-def get_requests(
-    service: RequestService = Depends(get_request_service),
-):
-    return service.get_requests()
-
-
-@router.get(
-    "/{request_id}",
-    response_model=RequestResponse,
-)
-def get_request(
+def create_offer(
     request_id: int,
-    service: RequestService = Depends(get_request_service),
+    schema: OfferCreate,
+    current_user: User = Depends(require_role(UserRole.BUYER)),
+    service: OfferService = Depends(get_offer_service),
 ):
-    return service.get_request(request_id)
+    return service.create_offer(schema, request_id=request_id, buyer_id=current_user.id)
+
+
+@router.get(
+    "/requests/{request_id}/offers",
+    response_model=list[OfferResponse],
+)
+def get_offers_by_request(
+    request_id: int,
+    service: OfferService = Depends(get_offer_service),
+):
+    return service.get_offers_by_request(request_id)
+
+
+@router.get(
+    "/offers/{offer_id}",
+    response_model=OfferResponse,
+)
+def get_offer(
+    offer_id: int,
+    service: OfferService = Depends(get_offer_service),
+):
+    return service.get_offer(offer_id)
 
 
 @router.patch(
-    "/{request_id}",
-    response_model=RequestResponse,
+    "/offers/{offer_id}/status",
+    response_model=OfferResponse,
 )
-def update_request(
-    request_id: int,
-    schema: RequestUpdate,
-    service: RequestService = Depends(get_request_service),
+def update_offer_status(
+    offer_id: int,
+    schema: OfferUpdateStatus,
+    current_user: User = Depends(get_current_user),
+    service: OfferService = Depends(get_offer_service),
 ):
-    return service.update_request(request_id, schema)
+    return service.update_offer_status(
+        offer_id=offer_id,
+        new_status=schema.status,
+        current_user_id=current_user.id
+    )
 
 
 @router.delete(
-    "/{request_id}",
+    "/offers/{offer_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-def delete_request(
-    request_id: int,
-    service: RequestService = Depends(get_request_service),
+def delete_offer(
+    offer_id: int,
+    service: OfferService = Depends(get_offer_service),
 ) -> None:
-    service.delete_request(request_id)
+    service.delete_offer(offer_id)

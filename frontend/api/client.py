@@ -1,11 +1,11 @@
 import requests
 from streamlit import session_state
 
-BACKEND_URL = "http://0.0.0.0:8000"
+BACKEND_URL = "http://127.0.0.1:8000"
 
-# --- ЭНДПОИНТЫ (Убраны все финальные слэши для точного совпадения с FastAPI) ---
-LOGIN_ENDPOINT = f"{BACKEND_URL}/auth/login/"
-REGISTER_ENDPOINT = f"{BACKEND_URL}/auth/register/"
+# --- ЭНДПОИНТЫ ---
+LOGIN_ENDPOINT = f"{BACKEND_URL}/auth/login"
+REGISTER_ENDPOINT = f"{BACKEND_URL}/auth/register"
 PROFILE_ENDPOINT = f"{BACKEND_URL}/users/me"
 
 GOODS_ENDPOINT = f"{BACKEND_URL}/goods"
@@ -114,7 +114,7 @@ def delete_offer(offer_id: int) -> requests.Response:
     return request_with_authorization_header("DELETE", f"{OFFERS_ENDPOINT}/{offer_id}")
 
 
-# --- УПРАВЛЕНИЕ СДЕЛКАМИ ЧЕРЕЗ СТАТУСЫ ПРЕДЛОЖЕНИЙ ---
+# --- УПРАВЛЕНИЕ СДЕЛКАМИ И СТАТУСАМИ ---
 def change_offer_status(offer_id: int, status_str: str) -> requests.Response:
     """Изменение статуса предложения (accepted, shipped, delivered, canceled)"""
     payload = {"status": status_str}
@@ -123,6 +123,14 @@ def change_offer_status(offer_id: int, status_str: str) -> requests.Response:
         f"{OFFERS_ENDPOINT}/{offer_id}/status",
         payload=payload
     )
+
+
+def create_order(offer_id: int) -> requests.Response:
+    """
+    Маскируем под старое название: покупатель принимает предложение баера.
+    Фактически переводит статус оффера в 'accepted', что инициирует сделку.
+    """
+    return change_offer_status(offer_id, "accepted")
 
 
 def get_my_purchases() -> requests.Response:

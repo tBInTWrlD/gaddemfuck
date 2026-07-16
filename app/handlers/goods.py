@@ -16,12 +16,22 @@ router = APIRouter(
 def get_good_service(db: Session = Depends(get_db)) -> GoodService:
     return GoodService(db)
 
+@router.get("/")
+def get_goods(
+    service: GoodService = Depends(get_good_service),
+):
+    goods = service.get_goods()
+    # Вручную превращаем список ORM-объектов в список безопасных словарей
+    return [
+        {
+            "id": g.id,
+            "name": g.name,
+            "brand": g.brand,
+            "category": g.category,
+            "image_url": g.image_url
+        } for g in goods
+    ]
 
-@router.post(
-    "/",
-    response_model=GoodResponse,
-    status_code=status.HTTP_201_CREATED,
-)
 def create_good(
     schema: GoodCreate,
     service: GoodService = Depends(get_good_service),
@@ -54,10 +64,22 @@ def search_goods(
     return service.search_goods(query)
 
 
-@router.get(
-    "/{good_id}",
-    response_model=GoodResponse,
-)
+@router.get("/")
+def get_goods(
+    service: GoodService = Depends(get_good_service),
+):
+    goods = service.get_goods()
+    # Вручную превращаем список ORM-объектов в список безопасных словарей
+    return [
+        {
+            "id": g.id,
+            "name": g.name,
+            "brand": g.brand,
+            "category": g.category,
+            "image_url": g.image_url
+        } for g in goods
+    ]
+
 def get_good(
     good_id: int,
     service: GoodService = Depends(get_good_service),

@@ -19,13 +19,21 @@ def get_user_service(db: Session = Depends(get_db)) -> UserService:
 
 def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
     return AuthService(db)
+@router.post("/register", status_code=status.HTTP_201_CREATED)
+def register_user(
+    schema: UserCreate,
+    service: UserService = Depends(get_user_service),
+):
+    user = service.create_user(schema)
+    # Возвращаем плоский словарь вместо сложного ORM-объекта!
+    return {
+        "id": user.id,
+        "email": user.email,
+        "country": user.country,
+        "is_active": user.is_active,
+        "role": user.role
+    }
 
-
-@router.post(
-    "/register",
-    response_model=UserResponse,
-    status_code=status.HTTP_201_CREATED,
-)
 def register_user(
     schema: UserCreate,
     service: UserService = Depends(get_user_service),

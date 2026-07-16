@@ -1,12 +1,17 @@
 import streamlit as st
 from auth.state import is_authenticated, is_admin, is_buyer, current_profile
 
+# 1. Настройка страницы должна идти строго первой
 st.set_page_config(
     page_title="Реверс-Маркетплейс",
     page_icon="✈️",
     layout="wide"
 )
 
+# 2. 🎈 Запускаем летящие шарики при каждой загрузке главной страницы!
+st.balloons()
+
+# --- Остальной код твоей главной страницы без изменений ---
 st.title("✈️ Международный Реверс-Маркетплейс")
 st.markdown("""
 ### Добро пожаловать в проект типа «Авито Наоборот»!
@@ -14,8 +19,10 @@ st.markdown("""
 """)
 
 st.divider()
+st.divider()
+st.markdown("### 🤫 Секретная зона")
+st.page_link("pages/platypus.py", label="Посетить секретный штаб Паши Утконоса (Наш талисман)", icon="🦫")
 
-# Навигационный блок в теле главной страницы для удобства
 col1, col2 = st.columns(2)
 
 with col1:
@@ -30,7 +37,6 @@ with col2:
 
 st.divider()
 
-# Показываем статус авторизации прямо на главной странице
 if is_authenticated():
     profile = current_profile()
     email = profile.get("email") if profile else "пользователь"

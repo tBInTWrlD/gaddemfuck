@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field
 
 class GoodCreate(BaseModel):
-    name: str = Field(min_length=1, max_length=255, description="Название товара (например, iPhone 15 Pro)")
+    name: str = Field(min_length=1, max_length=255)
     brand: str | None = Field(default=None, max_length=100)
     category: str | None = Field(default=None, max_length=100)
     image_url: str | None = Field(default=None, max_length=500)
