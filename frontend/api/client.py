@@ -1,7 +1,15 @@
 import requests
 from streamlit import session_state
 
-BACKEND_URL = "http://127.0.0.1:8000"
+import os
+import requests
+from streamlit import session_state
+
+# Отключаем использование системных прокси для локальных адресов
+os.environ["NO_PROXY"] = "localhost,127.0.0.1"
+
+# Меняем localhost на 127.0.0.1 (часто прокси перехватывают именно слово localhost)
+BACKEND_URL = "http://127.0.0.1:8002"
 
 # --- ЭНДПОИНТЫ ---
 LOGIN_ENDPOINT = f"{BACKEND_URL}/auth/login"

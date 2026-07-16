@@ -27,11 +27,11 @@ def register_user(
     user = service.create_user(schema)
     # Возвращаем плоский словарь вместо сложного ORM-объекта!
     return {
-        "id": user.id,
-        "email": user.email,
-        "country": user.country,
-        "is_active": user.is_active,
-        "role": user.role
+       "id": user.id,
+       "email": user.email,
+       "country": user.country,
+       "is_active": user.is_active,
+       "role": user.role
     }
 
 def register_user(
@@ -42,11 +42,11 @@ def register_user(
 
 
 @router.post(
-    "/login",
-    response_model=Token,
+   "/login",
+   response_model=Token,
 )
 def login_user(
-    schema: UserLogin,
-    service: AuthService = Depends(get_auth_service),
+   schema: UserLogin,
+   service: AuthService = Depends(get_auth_service),
 ):
     return service.login(schema)

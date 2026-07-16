@@ -3,6 +3,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
 
+
 class Request(Base):
     __tablename__ = "requests"
 
@@ -17,4 +18,4 @@ class Request(Base):
     # Отношения (Relationships)
     creator: Mapped["User"] = relationship(back_populates="requests")
     good: Mapped["Good"] = relationship(back_populates="requests")  # Обратная связь с каталогом товаров
-
+    offers: Mapped[list["Offer"]] = relationship(back_populates="request")
